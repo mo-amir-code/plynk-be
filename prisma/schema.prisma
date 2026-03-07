@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum WidgetTypeName {
+  GITHUB
+  LINKEDIN
+  INSTAGRAM
+  PORTFOLIO
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  username     String?   @unique
+  passwordHash String
+  role         UserRole  @default(USER)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  pages        Page[]
+  assets       Asset[]
+
+  @@map("users")
+}
+
+model Page {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slug        String   @unique
+  title       String
+  themeId     String?  @unique
+  theme       Theme?   @relation(fields: [themeId], references: [id])
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  widgets     Widget[]
+
+  @@map("pages")
+}
+
+model Theme {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  baseThemeId String?
+  styleConfig Json     // { "page": {}, "widgetDefault": {}, "widgetStyles": {} }
+  createdAt   DateTime @default(now())
+  page        Page?
+
+  @@map("themes")
+}
+
+model Widget {
+  id        String     @id @default(uuid())
+  pageId    String
+  page      Page       @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type      WidgetTypeName
+  x         Int
+  y         Int
+  width     Int
+  height    Int
+  config    Json       // { "data": {}, "options": {} }
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("widgets")
+}
+
+model WidgetType {
+  id            String         @id @default(uuid())
+  name          WidgetTypeName @unique
+  description   String?
+  icon          String?
+  defaultWidth  Int
+  defaultHeight Int
+  minWidth      Int
+  minHeight     Int
+
+  @@map("widget_types")
+}
+
+model Asset {
+  id         String   @id @default(uuid())
+  url        String
+  type       String
+  altText    String?
+  uploadedBy String
+  user       User     @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@map("assets")
+}
