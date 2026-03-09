@@ -3,7 +3,7 @@ import { ThemeController } from "./theme.controller";
 import { protect, restrictTo } from "../../common/middleware/auth.middleware";
 import { validate } from "../../common/middleware/validate.middleware";
 import { updateThemeSchema } from "./theme.validation";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "@/generated/client/client";
 
 const router = Router();
 

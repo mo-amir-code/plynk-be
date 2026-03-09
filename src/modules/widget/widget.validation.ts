@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { WidgetTypeName } from "@prisma/client";
+import { WidgetTypeName } from "@/generated/client/client";
 
 const GRID_COLUMNS = 12;
 

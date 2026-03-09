@@ -4,7 +4,7 @@ import prisma from "../../config/prisma";
 import { AppError } from "../../common/utils/app-error";
 import { HttpStatus } from "../../common/enums/http-status.enum";
 import { RegisterBody, LoginBody } from "./auth.validation";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "@/generated/client/client";
 
 export class AuthService {
   private generateToken(id: string, role: UserRole): string {

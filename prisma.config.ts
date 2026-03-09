@@ -1,0 +1,20 @@
+import "dotenv/config";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { defineConfig, env } from "prisma/config";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default defineConfig({
+  // Use absolute paths for maximum reliability in all environments
+  schema: path.join(__dirname, "prisma", "schema.prisma"),
+
+  datasource: {
+    url: env("DIRECT_URL"),
+  },
+
+  migrations: {
+    path: path.join(__dirname, "prisma", "migrations"),
+  },
+});
