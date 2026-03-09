@@ -4,12 +4,12 @@
   "description": "Creator Page Builder Backend",
   "main": "dist/server.js",
   "scripts": {
-    "build": "pnpm prisma generate && tsc",
+    "build": "npx prisma generate && tsc",
     "dev": "tsx watch src/server.ts",
-    "prisma:generate": "pnpm prisma generate",
-    "prisma:migrate": "pnpm prisma migrate dev",
-    "prisma:studio": "pnpm prisma studio",
-    "start": "pnpm prisma migrate deploy && node dist/server.js",
+    "prisma:generate": "npx prisma generate",
+    "prisma:migrate": "npx prisma migrate dev",
+    "prisma:studio": "npx prisma studio",
+    "start": "npx prisma migrate deploy && node dist/server.js",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },
