@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { requestLogger } from "./common/middleware/logger.middleware";
+import { readinessGuard } from "./common/middleware/readiness.middleware";
 import { globalErrorHandler } from "./common/middleware/error.middleware";
 import { HttpStatus } from "./common/enums/http-status.enum";
 import { sendResponse } from "./common/utils/app-response";
@@ -13,6 +14,7 @@ import widgetRoutes from "./modules/widget/widget.routes";
 import themeRoutes from "./modules/theme/theme.routes";
 import widgetTypeRoutes from "./modules/widget-type/widget-type.routes";
 import assetRoutes from "./modules/asset/asset.routes";
+import { healthState } from "./common/utils/health";
 
 dotenv.config();
 
@@ -21,9 +23,17 @@ const app: Application = express();
 app.use(cors());
 app.use(express.json());
 app.use(requestLogger);
+app.use(readinessGuard);
 
 app.get("/health", (req: Request, res: Response) => {
-  return sendResponse(res, HttpStatus.OK, "Server is healthy", {
+  if (!healthState.isReady) {
+    return sendResponse(res, HttpStatus.SERVICE_UNAVAILABLE, "Server is starting...", {
+      ready: false,
+    });
+  }
+
+  return sendResponse(res, HttpStatus.OK, "Server is healthy :)", {
+    ready: true,
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
   });
