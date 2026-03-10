@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { AppError } from "../utils/app-error";
 import prisma from "../../config/prisma";
-import { UserRole } from "@/generated/client/client";
+import { UserRole } from "../../generated/client/client";
 import { HttpStatus } from "../enums/http-status.enum";
 
 export interface AuthRequest extends Request {

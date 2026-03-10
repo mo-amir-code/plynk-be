@@ -1,4 +1,4 @@
-import { UserRole } from "@/generated/client/client";
+import { UserRole } from "../../generated/client/client";
 
 export interface UserPayload {
   id: string;

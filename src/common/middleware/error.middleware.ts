@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
-import { Prisma } from "@/generated/client/client";
+import { Prisma } from "../../generated/client/client";
 import { AppError } from "../utils/app-error";
 import { sendResponse } from "../utils/app-response";
 import { HttpStatus } from "../enums/http-status.enum";
