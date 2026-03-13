@@ -8,10 +8,10 @@
  *
  * 🟢 You can import this file directly.
  */
-export type * from './models/User.js'
-export type * from './models/Page.js'
-export type * from './models/Theme.js'
-export type * from './models/Widget.js'
-export type * from './models/WidgetType.js'
-export type * from './models/Asset.js'
-export type * from './commonInputTypes.js'
+export type * from './models/User'
+export type * from './models/Page'
+export type * from './models/Theme'
+export type * from './models/Widget'
+export type * from './models/WidgetType'
+export type * from './models/Asset'
+export type * from './commonInputTypes'
