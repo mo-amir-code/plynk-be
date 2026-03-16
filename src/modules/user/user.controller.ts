@@ -19,4 +19,16 @@ export class UserController {
       );
     },
   );
+
+  static updateMe = asyncHandler(
+    async (req: AuthRequest, res: Response, next: NextFunction) => {
+      const result = await userService.updateMe(req.user!.id, req.body);
+      return sendResponse(
+        res,
+        HttpStatus.OK,
+        "Profile updated successfully",
+        result,
+      );
+    },
+  );
 }

@@ -59,4 +59,28 @@ export class PageController {
       );
     },
   );
+ 
+  static getMyPage = asyncHandler(
+    async (req: AuthRequest, res: Response, next: NextFunction) => {
+      const result = await pageService.getMyPage(req.user!.id);
+      return sendResponse(
+        res,
+        HttpStatus.OK,
+        "Page fetched successfully",
+        result,
+      );
+    },
+  );
+ 
+  static syncPage = asyncHandler(
+    async (req: AuthRequest, res: Response, next: NextFunction) => {
+      const result = await pageService.syncPage(req.user!.id, req.body);
+      return sendResponse(
+        res,
+        HttpStatus.OK,
+        "Page synced successfully",
+        result,
+      );
+    },
+  );
 }

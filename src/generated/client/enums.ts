@@ -21,7 +21,12 @@ export const WidgetTypeName = {
   GITHUB: 'GITHUB',
   LINKEDIN: 'LINKEDIN',
   INSTAGRAM: 'INSTAGRAM',
-  PORTFOLIO: 'PORTFOLIO'
+  PORTFOLIO: 'PORTFOLIO',
+  FACEBOOK: 'FACEBOOK',
+  YOUTUBE: 'YOUTUBE',
+  TWITTER: 'TWITTER',
+  TIKTOK: 'TIKTOK',
+  DRIBBBLE: 'DRIBBBLE'
 } as const
 
 export type WidgetTypeName = (typeof WidgetTypeName)[keyof typeof WidgetTypeName]

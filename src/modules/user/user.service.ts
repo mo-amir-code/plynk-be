@@ -9,6 +9,7 @@ export class UserService {
       select: {
         id: true,
         email: true,
+        fullName: true,
         username: true,
         role: true,
         createdAt: true,
@@ -21,5 +22,32 @@ export class UserService {
     }
 
     return user;
+  }
+
+  async updateMe(userId: string, data: { fullName?: string; username?: string }) {
+    if (data.username) {
+      const existing = await prisma.user.findFirst({
+        where: {
+          username: data.username,
+          NOT: { id: userId },
+        },
+      });
+
+      if (existing) {
+        throw new AppError(HttpStatus.CONFLICT, "Username already taken");
+      }
+    }
+
+    return prisma.user.update({
+      where: { id: userId },
+      data,
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        username: true,
+        role: true,
+      },
+    });
   }
 }

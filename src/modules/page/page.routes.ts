@@ -6,6 +6,8 @@ import { createPageSchema, updatePageSchema } from "./page.validation";
 
 const router = Router();
 
+router.get("/me", protect, PageController.getMyPage);
+router.post("/sync", protect, PageController.syncPage);
 router.get("/:slug", PageController.getPageBySlug);
 router.post(
   "/",

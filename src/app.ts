@@ -41,7 +41,7 @@ app.get("/health", (req: Request, res: Response) => {
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
-app.use("/api/v1/pages", pageRoutes);
+app.use("/api/v1/page", pageRoutes);
 app.use("/api/v1/widgets", widgetRoutes);
 app.use("/api/v1/themes", themeRoutes);
 app.use("/api/v1/widget-types", widgetTypeRoutes);
