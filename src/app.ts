@@ -27,7 +27,7 @@ app.use(readinessGuard);
 
 app.get("/health", (req: Request, res: Response) => {
   if (!healthState.isReady) {
-    return sendResponse(res, HttpStatus.SERVICE_UNAVAILABLE, "✅ Server is starting...", {
+    return sendResponse(res, HttpStatus.SERVICE_UNAVAILABLE, "✅ Server is starting oohooo...", {
       ready: false,
     });
   }
