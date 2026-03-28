@@ -33,7 +33,7 @@ enum WidgetType {
 model User {
   id           String    @id @default(uuid())
   email        String    @unique
-  username     String    @unique
+  username     String?   @unique
   passwordHash String
   fullName     String?
   role         OwnerType @default(USER)

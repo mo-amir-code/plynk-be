@@ -31,15 +31,15 @@ enum WidgetType {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  username     String   @unique
+  id           String    @id @default(uuid())
+  email        String    @unique
+  username     String?   @unique
   passwordHash String
   fullName     String?
   role         OwnerType @default(USER)
   tnc          Boolean   @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   page   Page?    // A user can have only one page.
   themes Theme[]  // themes created by user
