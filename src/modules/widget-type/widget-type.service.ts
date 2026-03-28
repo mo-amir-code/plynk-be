@@ -1,7 +1,10 @@
-import prisma from "../../config/prisma";
+import { WidgetType } from "../../generated/client/client";
 
 export class WidgetTypeService {
   async getAllWidgetTypes() {
-    return prisma.widgetType.findMany();
+    return Object.values(WidgetType).map(type => ({
+      name: type,
+      description: `Widget type for ${type}`,
+    }));
   }
 }

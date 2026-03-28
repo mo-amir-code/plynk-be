@@ -2,11 +2,8 @@ import { z } from "zod";
 
 export const createPageSchema = z.object({
   body: z.object({
-    slug: z
-      .string()
-      .min(3)
-      .regex(/^[a-z0-9-]+$/),
     title: z.string().min(1),
+    themeId: z.string().uuid(),
   }),
 });
 
@@ -15,11 +12,6 @@ export const updatePageSchema = z.object({
     id: z.string().uuid(),
   }),
   body: z.object({
-    slug: z
-      .string()
-      .min(3)
-      .regex(/^[a-z0-9-]+$/)
-      .optional(),
     title: z.string().min(1).optional(),
     themeId: z.string().uuid().optional(),
     isPublished: z.boolean().optional(),

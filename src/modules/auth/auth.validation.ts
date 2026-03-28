@@ -11,7 +11,10 @@ export const registerSchema = z.object({
   body: z.object({
     email: z.string().email(),
     password: z.string().min(6),
-    fullName: z.string().min(2),
+    fullName: z.string().optional(),
+    tnc: z.boolean().refine((val) => val === true, {
+      message: "You must accept the terms and conditions",
+    }),
   }),
 });
 

@@ -1,8 +1,8 @@
-import { UserRole } from "../../generated/client/client";
+import { OwnerType } from "../../generated/client/client";
 
 export interface UserPayload {
   id: string;
-  role: UserRole;
+  role: OwnerType;
 }
 
 export interface AuthResponse {
@@ -10,7 +10,7 @@ export interface AuthResponse {
     id: string;
     email: string;
     username: string | null;
-    role: UserRole;
+    role: OwnerType;
   };
   token: string;
 }

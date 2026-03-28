@@ -31,19 +31,19 @@ enum WidgetType {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  username     String   @unique
+  id           String    @id @default(uuid())
+  email        String    @unique
+  username     String    @unique
   passwordHash String
   fullName     String?
   role         OwnerType @default(USER)
   tnc          Boolean   @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  page   Page?    // A user can have only one page.
-  themes Theme[]  // themes created by user
-  assets Asset[]  // assets uploaded by user
+  page   Page? // A user can have only one page.
+  themes Theme[] // themes created by user
+  assets Asset[] // assets uploaded by user
 
   @@map("users")
 }
@@ -71,7 +71,7 @@ model Theme {
   type        ThemeType
   description String
   styleConfig Json      @default("{}") // jsonb
-  createdBy   String?   // optional if ownerType is admin
+  createdBy   String? // optional if ownerType is admin
   user        User?     @relation(fields: [createdBy], references: [id])
   createdAt   DateTime  @default(now())
 
@@ -86,12 +86,12 @@ model Widget {
   page      Page       @relation(fields: [pageId], references: [id], onDelete: Cascade)
   type      WidgetType
   handle    String
-  fullURL   String     // when type is equal to custom
+  fullURL   String // when type is equal to custom
   startCol  Int
   startRow  Int
   colSize   Int
   rowSize   Int
-  icon      String?    // assets URL optional in custom type condition
+  icon      String? // assets URL optional in custom type condition
   config    Json       @default("{}") // { "data": {}, "options": {} }
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
@@ -103,7 +103,7 @@ model Asset {
   id         String    @id @default(uuid())
   url        String
   ownerType  OwnerType
-  uploadedBy String?   // optional if ownerType is admin
+  uploadedBy String? // optional if ownerType is admin
   user       User?     @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
   createdAt  DateTime  @default(now())
 
