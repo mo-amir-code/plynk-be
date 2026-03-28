@@ -4,10 +4,10 @@ import prisma from "../../config/prisma";
 import { AppError } from "../../common/utils/app-error";
 import { HttpStatus } from "../../common/enums/http-status.enum";
 import { RegisterBody, LoginBody } from "./auth.validation";
-import { UserRole } from "../../generated/client/client";
+import { OwnerType } from "../../generated/client/client";
 
 export class AuthService {
-  private generateToken(id: string, role: UserRole, username?: string | null): string {
+  private generateToken(id: string, role: OwnerType, username?: string | null): string {
     return jwt.sign({ id, role, username }, process.env.JWT_SECRET!, {
       expiresIn: "7d",
     });
@@ -32,21 +32,22 @@ export class AuthService {
     const user = await prisma.user.create({
       data: {
         email: data.email,
-        fullName: data.fullName,
         passwordHash,
+        fullName: data.fullName,
+        tnc: data.tnc,
       },
       select: {
         id: true,
         email: true,
-        fullName: true,
         username: true,
+        fullName: true,
         role: true,
       },
     });
 
-    const token = this.generateToken(user.id, user.role, user.username);
+    const token = this.generateToken(user.id, user.role as OwnerType, user.username);
 
-    return { user, token };
+    return { user: { ...user }, token };
   }
 
   async login(data: LoginBody) {
@@ -58,14 +59,14 @@ export class AuthService {
       throw new AppError(HttpStatus.UNAUTHORIZED, "Invalid email or password");
     }
 
-    const token = this.generateToken(user.id, user.role, user.username);
+    const token = this.generateToken(user.id, user.role as OwnerType, user.username);
 
     return {
       user: {
         id: user.id,
         email: user.email,
-        fullName: user.fullName,
         username: user.username,
+        fullName: user.fullName,
         role: user.role,
       },
       token,
@@ -94,14 +95,12 @@ export class AuthService {
       select: {
         id: true,
         email: true,
-        fullName: true,
         username: true,
-        role: true,
       },
     });
 
-    const token = this.generateToken(user.id, user.role, user.username);
+    const token = this.generateToken(user.id, "USER" as OwnerType, user.username);
 
-    return { user, token };
+    return { user: { ...user, role: "USER" }, token };
   }
 }

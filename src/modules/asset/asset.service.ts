@@ -6,7 +6,8 @@ export class AssetService {
   async createAsset(userId: string, data: any) {
     return prisma.asset.create({
       data: {
-        ...data,
+        url: data.url,
+        ownerType: data.ownerType || "USER",
         uploadedBy: userId,
       },
     });

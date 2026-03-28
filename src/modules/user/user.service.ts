@@ -9,8 +9,8 @@ export class UserService {
       select: {
         id: true,
         email: true,
-        fullName: true,
         username: true,
+        fullName: true,
         role: true,
         createdAt: true,
         updatedAt: true,
@@ -44,8 +44,8 @@ export class UserService {
       select: {
         id: true,
         email: true,
-        fullName: true,
         username: true,
+        fullName: true,
         role: true,
       },
     });

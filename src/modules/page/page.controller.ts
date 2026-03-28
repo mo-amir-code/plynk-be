@@ -20,9 +20,9 @@ export class PageController {
     },
   );
 
-  static getPageBySlug = asyncHandler(
+  static getPageByUsername = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-      const result = await pageService.getPageBySlug(req.params.slug as string);
+      const result = await pageService.getPageByUsername(req.params.username as string);
       return sendResponse(
         res,
         HttpStatus.OK,

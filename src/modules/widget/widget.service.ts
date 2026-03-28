@@ -13,7 +13,7 @@ export class WidgetService {
       throw new AppError(HttpStatus.NOT_FOUND, "Page not found");
     }
 
-    if (page.userId !== userId) {
+    if (page.createdBy !== userId) {
       throw new AppError(
         HttpStatus.FORBIDDEN,
         "Unauthorized access to this page",
@@ -28,7 +28,7 @@ export class WidgetService {
   async getWidgetsByPage(pageId: string) {
     return prisma.widget.findMany({
       where: { pageId },
-      orderBy: [{ y: "asc" }, { x: "asc" }],
+      orderBy: [{ startRow: "asc" }, { startCol: "asc" }],
     });
   }
 
@@ -42,7 +42,7 @@ export class WidgetService {
       throw new AppError(HttpStatus.NOT_FOUND, "Widget not found");
     }
 
-    if (widget.page.userId !== userId) {
+    if (widget.page.createdBy !== userId) {
       throw new AppError(
         HttpStatus.FORBIDDEN,
         "Unauthorized access to this widget",
@@ -51,10 +51,10 @@ export class WidgetService {
 
     // Grid validation for updates
     const gridColumns = 12; // Default, can be fetched if dynamic
-    const newX = data.x ?? widget.x;
-    const newWidth = data.width ?? widget.width;
+    const newStartCol = data.startCol ?? widget.startCol;
+    const newColSize = data.colSize ?? widget.colSize;
 
-    if (newX + newWidth > gridColumns) {
+    if (newStartCol + newColSize > gridColumns) {
       throw new AppError(
         HttpStatus.BAD_REQUEST,
         `Widget width exceeds grid limit of ${gridColumns} columns`,
@@ -77,7 +77,7 @@ export class WidgetService {
       throw new AppError(HttpStatus.NOT_FOUND, "Widget not found");
     }
 
-    if (widget.page.userId !== userId) {
+    if (widget.page.createdBy !== userId) {
       throw new AppError(
         HttpStatus.FORBIDDEN,
         "Unauthorized access to this widget",

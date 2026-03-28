@@ -5,38 +5,36 @@ import { CreatePageBody, UpdatePageBody } from "./page.validation";
 
 export class PageService {
   async createPage(userId: string, data: CreatePageBody) {
-    const existingPage = await prisma.page.findUnique({
-      where: { slug: data.slug },
-    });
-
-    if (existingPage) {
-      throw new AppError(HttpStatus.CONFLICT, "Slug is already taken");
-    }
-
     return prisma.page.create({
       data: {
-        userId,
-        slug: data.slug,
+        createdBy: userId,
         title: data.title,
+        themeId: data.themeId,
       },
     });
   }
 
-  async getPageBySlug(slug: string) {
-    const page = await prisma.page.findUnique({
-      where: { slug },
+  async getPageByUsername(username: string) {
+    const user = await prisma.user.findUnique({
+      where: { username },
       include: {
-        theme: true,
-        widgets: true,
+        page: {
+          include: {
+            theme: true,
+            widgets: true,
+          },
+        },
       },
     });
 
-    if (!page || !page.isPublished) {
+    if (!user || !user.page || !user.page.isPublished) {
       throw new AppError(HttpStatus.NOT_FOUND, "Page not found or is currently private");
     }
 
+    const { page } = user;
+
     return {
-      slug: page.slug,
+      username: user.username,
       title: page.title,
       theme: {
         styleConfig: page.theme?.styleConfig || {},
@@ -44,10 +42,12 @@ export class PageService {
       widgets: page.widgets.map(w => ({
         id: w.id,
         type: w.type,
-        x: w.x,
-        y: w.y,
-        width: w.width,
-        height: w.height,
+        handle: w.handle,
+        fullURL: w.fullURL,
+        startCol: w.startCol,
+        startRow: w.startRow,
+        colSize: w.colSize,
+        rowSize: w.rowSize,
         config: w.config,
       })),
     };
@@ -62,21 +62,11 @@ export class PageService {
       throw new AppError(HttpStatus.NOT_FOUND, "Page not found");
     }
 
-    if (page.userId !== userId) {
+    if (page.createdBy !== userId) {
       throw new AppError(
         HttpStatus.FORBIDDEN,
         "Unauthorized access to this page",
       );
-    }
-
-    if (data.slug) {
-      const existingPage = await prisma.page.findFirst({
-        where: { slug: data.slug, NOT: { id } },
-      });
-
-      if (existingPage) {
-        throw new AppError(HttpStatus.CONFLICT, "Slug is already taken");
-      }
     }
 
     return prisma.page.update({
@@ -94,7 +84,7 @@ export class PageService {
       throw new AppError(HttpStatus.NOT_FOUND, "Page not found");
     }
 
-    if (page.userId !== userId) {
+    if (page.createdBy !== userId) {
       throw new AppError(
         HttpStatus.FORBIDDEN,
         "Unauthorized access to this page",
@@ -108,7 +98,7 @@ export class PageService {
 
   async getMyPage(userId: string) {
     const page = await prisma.page.findFirst({
-      where: { userId },
+      where: { createdBy: userId },
       include: {
         theme: true,
         widgets: true,
@@ -126,22 +116,34 @@ export class PageService {
 
   async syncPage(userId: string, data: { themeConfig?: any; widgets?: any[]; isPublished?: boolean }) {
     let page = await prisma.page.findFirst({
-      where: { userId },
+      where: { createdBy: userId },
       include: { theme: true },
     });
 
     if (!page) {
-      // Fetch user to get username for slug
+      // Fetch user to get username
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (!user || !user.username) {
         throw new AppError(HttpStatus.BAD_REQUEST, "User must have a username to create a page");
       }
 
+      // We need a default theme first
+      const defaultTheme = await prisma.theme.create({
+        data: {
+          name: `${user.username}-theme`,
+          ownerType: "USER",
+          type: "LINKS",
+          description: "Default theme",
+          styleConfig: {},
+          createdBy: userId,
+        }
+      });
+
       page = await prisma.page.create({
         data: {
-          userId,
-          slug: user.username,
-          title: `${user.fullName || user.username}'s Page`,
+          createdBy: userId,
+          title: `${user.username}'s Page`,
+          themeId: defaultTheme.id,
         },
         include: { theme: true },
       });
@@ -158,29 +160,14 @@ export class PageService {
 
       // 1. Update Theme if provided
       if (data.themeConfig) {
-        if (page.themeId) {
-          await tx.theme.update({
-            where: { id: page.themeId },
-            data: { styleConfig: data.themeConfig },
-          });
-        } else {
-          const newTheme = await tx.theme.create({
-            data: {
-              name: `${page.slug}-theme`,
-              styleConfig: data.themeConfig,
-            },
-          });
-          await tx.page.update({
-            where: { id: page.id },
-            data: { themeId: newTheme.id },
-          });
-        }
+        await tx.theme.update({
+          where: { id: page.themeId },
+          data: { styleConfig: data.themeConfig },
+        });
       }
 
       // 2. Sync Widgets if provided
       if (data.widgets) {
-        // Simple approach: delete all and recreate
-        // This ensures the order and state match the frontend perfectly
         await tx.widget.deleteMany({
           where: { pageId: page.id },
         });
@@ -189,12 +176,14 @@ export class PageService {
           await tx.widget.createMany({
             data: data.widgets.map((w: any) => ({
               pageId: page.id,
-              type: w.type.toUpperCase(),
-              x: w.x,
-              y: w.y,
-              width: w.width,
-              height: w.height,
-              config: w.config,
+              type: (w.type || "CUSTOM").toUpperCase(),
+              handle: w.handle || "",
+              fullURL: w.fullURL || "",
+              startCol: w.startCol || 0,
+              startRow: w.startRow || 0,
+              colSize: w.colSize || 1,
+              rowSize: w.rowSize || 1,
+              config: w.config || {},
             })),
           });
         }
