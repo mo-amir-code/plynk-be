@@ -7,6 +7,11 @@ export const requestLogger = (
   next: NextFunction,
 ) => {
   const start = Date.now();
+
+  if (req.url === "/health" || req.url === "/") {
+    return next();
+  }
+
   res.on("finish", () => {
     const duration = Date.now() - start;
     const msg = `${req.method} ${req.url} ${res.statusCode} - ${duration}ms`;
