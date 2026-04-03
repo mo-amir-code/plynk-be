@@ -41,6 +41,7 @@ coverage/
 # Note: DO NOT ignore the migrations folder
 dev.db
 dev.db-journal
+src/generated/client/
 
 # Other
 .npm

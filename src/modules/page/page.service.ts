@@ -106,8 +106,6 @@ export class PageService {
     });
 
     if (!page) {
-      // If no page found, we might want to create a default one or return null
-      // Let's return null and let the controller handle it
       return null;
     }
 
@@ -121,13 +119,11 @@ export class PageService {
     });
 
     if (!page) {
-      // Fetch user to get username
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (!user || !user.username) {
         throw new AppError(HttpStatus.BAD_REQUEST, "User must have a username to create a page");
       }
 
-      // We need a default theme first
       const defaultTheme = await prisma.theme.create({
         data: {
           name: `${user.username}-theme`,
@@ -150,7 +146,6 @@ export class PageService {
     }
 
     return await prisma.$transaction(async (tx) => {
-      // 0. Update Page basic info (like isPublished)
       if (data.isPublished !== undefined) {
         await tx.page.update({
           where: { id: page.id },
@@ -158,7 +153,6 @@ export class PageService {
         });
       }
 
-      // 1. Update Theme if provided
       if (data.themeConfig) {
         await tx.theme.update({
           where: { id: page.themeId },
@@ -166,7 +160,6 @@ export class PageService {
         });
       }
 
-      // 2. Sync Widgets if provided
       if (data.widgets) {
         await tx.widget.deleteMany({
           where: { pageId: page.id },
