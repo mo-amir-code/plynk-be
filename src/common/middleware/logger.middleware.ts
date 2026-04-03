@@ -8,7 +8,7 @@ export const requestLogger = (
 ) => {
   const start = Date.now();
 
-  if (req.url === "/health" || req.url === "/") {
+  if (req.path === "/health" || req.path === "/") {
     return next();
   }
 
