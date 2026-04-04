@@ -15,6 +15,8 @@ import themeRoutes from "./modules/theme/theme.routes";
 import widgetTypeRoutes from "./modules/widget-type/widget-type.routes";
 import assetRoutes from "./modules/asset/asset.routes";
 import { healthState } from "./common/utils/health";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./common/config/swagger";
 
 dotenv.config();
 
@@ -24,6 +26,8 @@ app.use(cors());
 app.use(express.json());
 app.use(requestLogger);
 app.use(readinessGuard);
+
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get("/health", (req: Request, res: Response) => {
   if (!healthState.isReady) {
