@@ -4,6 +4,7 @@ import { AuthService } from "./auth.service";
 import { sendResponse } from "../../common/utils/app-response";
 import { HttpStatus } from "../../common/enums/http-status.enum";
 import { asyncHandler } from "../../common/utils/async-handler";
+import { AppError } from "../../common/utils/app-error";
 
 const authService = new AuthService();
 
@@ -36,5 +37,26 @@ export class AuthController {
       const result = await authService.claimUsername(req.user!.id, username);
       return sendResponse(res, HttpStatus.OK, "Username claimed successfully", result);
     },
+  );
+
+  static googleAuth = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const url = authService.getGoogleAuthUrl();
+      res.redirect(url);
+    }
+  );
+
+  static googleCallback = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { code } = req.query;
+      if (!code) {
+        throw new AppError(HttpStatus.BAD_REQUEST, "Google Auth Code is missing");
+      }
+      
+      const result = await authService.handleGoogleCallback(code as string);
+      
+      const frontendUrl = process.env.FRONTEND_URL;
+      res.redirect(`${frontendUrl}/auth/callback?token=${result.token}`);
+    }
   );
 }

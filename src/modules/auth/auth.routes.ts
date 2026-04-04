@@ -25,4 +25,7 @@ router.patch(
   AuthController.claimUsername,
 );
 
+router.get("/google", AuthController.googleAuth);
+router.get("/google/callback", AuthController.googleCallback);
+
 export default router;
