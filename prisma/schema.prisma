@@ -38,8 +38,10 @@ model User {
   fullName     String?
   role         OwnerType @default(USER)
   tnc          Boolean   @default(false)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  resetToken        String?   @unique
+  resetTokenExpires DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   page   Page?    // A user can have only one page.
   themes Theme[]  // themes created by user

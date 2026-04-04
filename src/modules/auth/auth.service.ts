@@ -3,10 +3,12 @@ import jwt from "jsonwebtoken";
 import prisma from "../../config/prisma";
 import { AppError } from "../../common/utils/app-error";
 import { HttpStatus } from "../../common/enums/http-status.enum";
-import { RegisterBody, LoginBody } from "./auth.validation";
+import { RegisterBody, LoginBody, ForgotPasswordBody, ResetPasswordBody } from "./auth.validation";
 import { OwnerType } from "../../generated/client/client";
 import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
+import { sendEmail } from "../../common/utils/email";
+import { resetPasswordTemplate } from "../../common/templates/emails/reset-password.template";
 
 export class AuthService {
   private googleClient = new OAuth2Client(
@@ -153,5 +155,60 @@ export class AuthService {
 
     const token = this.generateToken(user.id, user.role as OwnerType, user.username);
     return { user, token };
+  }
+
+  async forgotPassword(data: ForgotPasswordBody) {
+    const user = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
+
+    if (!user) return;
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenHash = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetToken: resetTokenHash,
+        resetTokenExpires: new Date(Date.now() + 30 * 60 * 1000), // 30 mins
+      },
+    });
+
+    const resetUrl = `${process.env.FRONTEND_URL}/auth/reset-password?token=${resetToken}`;
+
+    await sendEmail({
+      to: user.email,
+      subject: "Reset your Plynk password",
+      html: resetPasswordTemplate(user.fullName || "there", resetUrl),
+    });
+  }
+
+  async resetPassword(data: ResetPasswordBody) {
+    const hashedToken = crypto.createHash("sha256").update(data.token).digest("hex");
+
+    const user = await prisma.user.findFirst({
+      where: {
+        resetToken: hashedToken,
+        resetTokenExpires: {
+          gt: new Date(),
+        },
+      },
+    });
+
+    if (!user) {
+      throw new AppError(HttpStatus.BAD_REQUEST, "Token is invalid or has expired");
+    }
+
+    const passwordHash = await bcrypt.hash(data.password, 12);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        resetToken: null,
+        resetTokenExpires: null,
+      },
+    });
   }
 }

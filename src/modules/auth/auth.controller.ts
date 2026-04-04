@@ -59,4 +59,18 @@ export class AuthController {
       res.redirect(`${frontendUrl}/auth/callback?token=${result.token}`);
     }
   );
+
+  static forgotPassword = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      await authService.forgotPassword(req.body);
+      return sendResponse(res, HttpStatus.OK, "If an account with that email exists, we have sent a reset link.");
+    }
+  );
+
+  static resetPassword = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      await authService.resetPassword(req.body);
+      return sendResponse(res, HttpStatus.OK, "Password has been reset successfully.");
+    }
+  );
 }
