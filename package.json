@@ -7,7 +7,6 @@
   "scripts": {
     "build": "prisma generate && tsc --noEmit && esbuild src/server.ts --bundle --platform=node --format=esm --outfile=dist/server.js --packages=external",
     "dev": "tsx watch src/server.ts",
-
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
@@ -22,6 +21,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "google-auth-library": "^10.6.2",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.20.0",
     "pino": "^10.3.1",
