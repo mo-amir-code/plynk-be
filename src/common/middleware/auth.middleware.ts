@@ -4,6 +4,7 @@ import { AppError } from "../utils/app-error";
 import prisma from "../../config/prisma";
 import { OwnerType } from "../../generated/client/client";
 import { HttpStatus } from "../enums/http-status.enum";
+import { AUTH_COOKIE_NAME } from "../utils/auth-cookie";
 
 export interface AuthRequest extends Request {
   user?: {
@@ -24,6 +25,10 @@ export const protect = async (
     req.headers.authorization.startsWith("Bearer")
   ) {
     token = req.headers.authorization.split(" ")[1];
+  }
+
+  if (!token && req.cookies?.[AUTH_COOKIE_NAME]) {
+    token = req.cookies[AUTH_COOKIE_NAME];
   }
 
   if (!token) {

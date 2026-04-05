@@ -1,6 +1,7 @@
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 import { requestLogger } from "./common/middleware/logger.middleware";
 import { readinessGuard } from "./common/middleware/readiness.middleware";
 import { globalErrorHandler } from "./common/middleware/error.middleware";
@@ -22,7 +23,17 @@ dotenv.config();
 
 const app: Application = express();
 
-app.use(cors());
+const corsOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(",").map((origin) => origin.trim())
+  : true;
+
+app.use(
+  cors({
+    origin: corsOrigins,
+    credentials: true,
+  }),
+);
+app.use(cookieParser());
 app.use(express.json());
 app.use(requestLogger);
 app.use(readinessGuard);
