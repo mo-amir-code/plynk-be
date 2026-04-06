@@ -55,12 +55,20 @@ const options: swaggerJsdoc.Options = {
           properties: {
             id: { type: 'string', format: 'uuid' },
             name: { type: 'string' },
-            role: { type: 'string', enum: ['ADMIN', 'USER'] },
+            ownerType: { type: 'string', enum: ['ADMIN', 'USER'] },
             type: { type: 'string', enum: ['SHOP', 'LINKS'] },
             description: { type: 'string' },
-            styleConfig: { type: 'object', additionalProperties: true },
+            styleConfig: { $ref: '#/components/schemas/ThemeConfig' },
             createdBy: { type: 'string', nullable: true },
             createdAt: { type: 'string', format: 'date-time' },
+          },
+        },
+        ThemeConfig: {
+          type: 'object',
+          properties: {
+            page: { type: 'object', additionalProperties: true },
+            widgetDefault: { type: 'object', additionalProperties: true },
+            widgetStyles: { type: 'object', additionalProperties: true },
           },
         },
         Widget: {

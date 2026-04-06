@@ -1,7 +1,8 @@
 import prisma from "../../config/prisma";
 import { AppError } from "../../common/utils/app-error";
 import { HttpStatus } from "../../common/enums/http-status.enum";
-import { CreatePageBody, UpdatePageBody } from "./page.validation";
+import { CreatePageBody, UpdatePageBody, SyncPageBody } from "./page.validation";
+import { OwnerType } from "../../generated/client/client";
 
 export class PageService {
   async createPage(userId: string, data: CreatePageBody) {
@@ -112,7 +113,7 @@ export class PageService {
     return page;
   }
 
-  async syncPage(userId: string, data: { themeConfig?: any; widgets?: any[]; isPublished?: boolean }) {
+  async syncPage(userId: string, data: SyncPageBody) {
     let page = await prisma.page.findFirst({
       where: { createdBy: userId },
       include: { theme: true },
@@ -124,16 +125,13 @@ export class PageService {
         throw new AppError(HttpStatus.BAD_REQUEST, "User must have a username to create a page");
       }
 
-      const defaultTheme = await prisma.theme.create({
-        data: {
-          name: `${user.username}-theme`,
-          ownerType: "USER",
-          type: "LINKS",
-          description: "Default theme",
-          styleConfig: {},
-          createdBy: userId,
-        }
+      const defaultTheme = await prisma.theme.findFirst({
+        where: { ownerType: OwnerType.ADMIN },
       });
+
+      if (!defaultTheme) {
+        throw new AppError(HttpStatus.INTERNAL_SERVER_ERROR, "Standard default theme not found");
+      }
 
       page = await prisma.page.create({
         data: {
@@ -146,29 +144,73 @@ export class PageService {
     }
 
     return await prisma.$transaction(async (tx) => {
+      let currentThemeId = page!.themeId;
+
       if (data.isPublished !== undefined) {
         await tx.page.update({
-          where: { id: page.id },
+          where: { id: page!.id },
           data: { isPublished: data.isPublished }
         });
       }
 
-      if (data.themeConfig) {
-        await tx.theme.update({
-          where: { id: page.themeId },
-          data: { styleConfig: data.themeConfig },
+      if (data.themeId && data.themeId !== page!.themeId) {
+        const targetTheme = await tx.theme.findUnique({ where: { id: data.themeId } });
+        if (!targetTheme) {
+          throw new AppError(HttpStatus.NOT_FOUND, "Selected theme not found");
+        }
+
+        if (targetTheme.ownerType === OwnerType.USER && targetTheme.createdBy !== userId) {
+          throw new AppError(HttpStatus.FORBIDDEN, "You do not have access to this theme");
+        }
+
+        await tx.page.update({
+          where: { id: page!.id },
+          data: { themeId: data.themeId }
         });
+        currentThemeId = data.themeId;
+      }
+
+      if (data.themeConfig) {
+        let customTheme = await tx.theme.findFirst({
+          where: { createdBy: userId, name: "Custom Theme", ownerType: OwnerType.USER }
+        });
+
+        if (customTheme) {
+          customTheme = await tx.theme.update({
+            where: { id: customTheme.id },
+            data: { styleConfig: data.themeConfig }
+          });
+        } else {
+          customTheme = await tx.theme.create({
+            data: {
+              name: "Custom Theme",
+              ownerType: OwnerType.USER,
+              type: page!.theme.type,
+              description: "Live page customizations",
+              styleConfig: data.themeConfig,
+              createdBy: userId,
+            }
+          });
+        }
+
+        if (currentThemeId !== customTheme.id) {
+          await tx.page.update({
+            where: { id: page!.id },
+            data: { themeId: customTheme.id }
+          });
+          currentThemeId = customTheme.id;
+        }
       }
 
       if (data.widgets) {
         await tx.widget.deleteMany({
-          where: { pageId: page.id },
+          where: { pageId: page!.id },
         });
 
         if (data.widgets.length > 0) {
           await tx.widget.createMany({
             data: data.widgets.map((w: any) => ({
-              pageId: page.id,
+              pageId: page!.id,
               type: (w.type || "CUSTOM").toUpperCase(),
               handle: w.handle || "",
               fullURL: w.fullURL || "",
@@ -183,9 +225,10 @@ export class PageService {
       }
 
       return tx.page.findUnique({
-        where: { id: page.id },
+        where: { id: page!.id },
         include: { theme: true, widgets: true },
       });
     });
   }
 }
+
