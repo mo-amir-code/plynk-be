@@ -2,7 +2,7 @@ import { Router } from "express";
 import { PageController } from "./page.controller";
 import { protect } from "../../common/middleware/auth.middleware";
 import { validate } from "../../common/middleware/validate.middleware";
-import { createPageSchema, updatePageSchema } from "./page.validation";
+import { createPageSchema, updatePageSchema, syncPageSchema } from "./page.validation";
 
 /**
  * @swagger
@@ -53,8 +53,9 @@ router.get("/me", protect, PageController.getMyPage);
  *           schema:
  *             type: object
  *             properties:
- *               title: { type: string }
  *               themeId: { type: string }
+ *               themeConfig: { $ref: '#/components/schemas/ThemeConfig' }
+ *               isPublished: { type: boolean }
  *               widgets: { type: array, items: { $ref: '#/components/schemas/Widget' } }
  *     responses:
  *       200:
@@ -64,7 +65,13 @@ router.get("/me", protect, PageController.getMyPage);
  *       400:
  *         $ref: '#/components/responses/BadRequest'
  */
-router.post("/sync", protect, PageController.syncPage);
+router.post(
+  "/sync",
+  protect,
+  validate(syncPageSchema),
+  PageController.syncPage,
+);
+
 
 /**
  * @swagger
