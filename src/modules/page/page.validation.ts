@@ -42,6 +42,7 @@ export const syncPageSchema = z.object({
           config: z.record(z.string(), z.any()).optional(),
         }),
       )
+      .max(50)
       .optional(),
   }),
 });

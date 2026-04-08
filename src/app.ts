@@ -14,14 +14,19 @@ import pageRoutes from "./modules/page/page.routes";
 import widgetRoutes from "./modules/widget/widget.routes";
 import themeRoutes from "./modules/theme/theme.routes";
 import widgetTypeRoutes from "./modules/widget-type/widget-type.routes";
+
 import assetRoutes from "./modules/asset/asset.routes";
+import helmet from "helmet";
 import { healthState } from "./common/utils/health";
+
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./common/config/swagger";
 
 dotenv.config();
 
 const app: Application = express();
+
+app.use(helmet());
 
 const corsOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(",").map((origin) => origin.trim())
@@ -34,11 +39,16 @@ app.use(
   }),
 );
 app.use(cookieParser());
-app.use(express.json());
+app.use(express.json({ limit: "100kb" }));
 app.use(requestLogger);
 app.use(readinessGuard);
 
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+const isProduction = process.env.NODE_ENV === "production";
+
+if (!isProduction) {
+  app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}
+
 
 app.get("/health", (req: Request, res: Response) => {
   if (!healthState.isReady) {

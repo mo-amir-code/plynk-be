@@ -10,6 +10,12 @@ import { clearAuthCookie, setAuthCookie } from "../../common/utils/auth-cookie";
 const authService = new AuthService();
 
 export class AuthController {
+  static getMe = asyncHandler(
+    async (req: AuthRequest, res: Response, next: NextFunction) => {
+      return sendResponse(res, HttpStatus.OK, "User fetched", req.user);
+    },
+  );
+
   static register = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const result = await authService.register(req.body);
