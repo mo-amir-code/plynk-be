@@ -2,6 +2,7 @@ import { Router } from "express";
 import { PageController } from "./page.controller";
 import { protect } from "../../common/middleware/auth.middleware";
 import { validate } from "../../common/middleware/validate.middleware";
+import { syncLimiter } from "../../common/middleware/rate-limit.middleware";
 import { createPageSchema, updatePageSchema, syncPageSchema } from "./page.validation";
 
 /**
@@ -68,6 +69,7 @@ router.get("/me", protect, PageController.getMyPage);
 router.post(
   "/sync",
   protect,
+  syncLimiter,
   validate(syncPageSchema),
   PageController.syncPage,
 );

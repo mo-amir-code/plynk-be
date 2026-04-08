@@ -2,6 +2,7 @@ import { Router } from "express";
 import { AuthController } from "./auth.controller";
 import { validate } from "../../common/middleware/validate.middleware";
 import { protect } from "../../common/middleware/auth.middleware";
+import { authLimiter, forgotPasswordLimiter, resetPasswordLimiter } from "../../common/middleware/rate-limit.middleware";
 import {
   loginSchema,
   registerSchema,
@@ -19,6 +20,28 @@ import {
  */
 
 const router = Router();
+
+router.use(authLimiter);
+
+/**
+ * @swagger
+ * /api/v1/auth/me:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+router.get("/me", protect, AuthController.getMe);
 
 /**
  * @swagger
@@ -96,7 +119,7 @@ router.post("/login", validate(loginSchema), AuthController.login);
  *       400:
  *         $ref: '#/components/responses/BadRequest'
  */
-router.post("/forgot-password", validate(forgotPasswordSchema), AuthController.forgotPassword);
+router.post("/forgot-password", forgotPasswordLimiter, validate(forgotPasswordSchema), AuthController.forgotPassword);
 
 /**
  * @swagger
@@ -120,7 +143,7 @@ router.post("/forgot-password", validate(forgotPasswordSchema), AuthController.f
  *       400:
  *         $ref: '#/components/responses/BadRequest'
  */
-router.post("/reset-password", validate(resetPasswordSchema), AuthController.resetPassword);
+router.post("/reset-password", resetPasswordLimiter, validate(resetPasswordSchema), AuthController.resetPassword);
 
 /**
  * @swagger

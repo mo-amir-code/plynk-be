@@ -20,6 +20,7 @@ export const setAuthCookie = (res: Response, token: string) => {
     ...getAuthCookieOptions(),
     maxAge: SEVEN_DAYS_IN_MS,
   });
+
 };
 
 export const clearAuthCookie = (res: Response) => {
