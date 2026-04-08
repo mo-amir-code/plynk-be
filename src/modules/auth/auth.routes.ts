@@ -124,6 +124,18 @@ router.post("/reset-password", validate(resetPasswordSchema), AuthController.res
 
 /**
  * @swagger
+ * /api/v1/auth/logout:
+ *   post:
+ *     summary: Log out and clear the auth token cookie
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ */
+router.post("/logout", AuthController.logout);
+
+/**
+ * @swagger
  * /api/v1/auth/check-username/{username}:
  *   get:
  *     summary: Check if a username is available
