@@ -5,7 +5,7 @@ import { sendResponse } from "../../common/utils/app-response";
 import { HttpStatus } from "../../common/enums/http-status.enum";
 import { asyncHandler } from "../../common/utils/async-handler";
 import { AppError } from "../../common/utils/app-error";
-import { setAuthCookie } from "../../common/utils/auth-cookie";
+import { clearAuthCookie, setAuthCookie } from "../../common/utils/auth-cookie";
 
 const authService = new AuthService();
 
@@ -77,5 +77,12 @@ export class AuthController {
       await authService.resetPassword(req.body);
       return sendResponse(res, HttpStatus.OK, "Password has been reset successfully.");
     }
+  );
+
+  static logout = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      clearAuthCookie(res);
+      return sendResponse(res, HttpStatus.OK, "Logged out successfully.");
+    },
   );
 }
