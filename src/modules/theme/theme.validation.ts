@@ -6,11 +6,7 @@ export const createThemeSchema = z.object({
     name: z.string().min(1),
     type: z.nativeEnum(ThemeType),
     description: z.string().min(1),
-    styleConfig: z.object({
-      page: z.record(z.string(), z.any()),
-      widgetDefault: z.record(z.string(), z.any()),
-      widgetStyles: z.record(z.string(), z.any()),
-    }),
+    styleConfig: z.record(z.string(), z.any()),
   }),
 });
 
@@ -22,13 +18,7 @@ export const updateThemeSchema = z.object({
     name: z.string().optional(),
     type: z.nativeEnum(ThemeType).optional(),
     description: z.string().optional(),
-    styleConfig: z
-      .object({
-        page: z.record(z.string(), z.any()),
-        widgetDefault: z.record(z.string(), z.any()),
-        widgetStyles: z.record(z.string(), z.any()),
-      })
-      .optional(),
+    styleConfig: z.record(z.string(), z.any()).optional(),
   }),
 });
 
