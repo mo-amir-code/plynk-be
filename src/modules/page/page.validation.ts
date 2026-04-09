@@ -21,13 +21,7 @@ export const updatePageSchema = z.object({
 export const syncPageSchema = z.object({
   body: z.object({
     themeId: z.string().uuid().optional(),
-    themeConfig: z
-      .object({
-        page: z.record(z.string(), z.any()),
-        widgetDefault: z.record(z.string(), z.any()),
-        widgetStyles: z.record(z.string(), z.any()),
-      })
-      .optional(),
+    themeConfig: z.record(z.string(), z.any()).optional(),
     isPublished: z.boolean().optional(),
     widgets: z
       .array(

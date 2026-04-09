@@ -65,10 +65,21 @@ const options: swaggerJsdoc.Options = {
         },
         ThemeConfig: {
           type: 'object',
-          properties: {
-            page: { type: 'object', additionalProperties: true },
-            widgetDefault: { type: 'object', additionalProperties: true },
-            widgetStyles: { type: 'object', additionalProperties: true },
+          description: 'Free-form styling config. Accepted keys: frostIntensity, surfaceTint, fontStyle, wallpaper, roundness, widgets (keyed by widget_id)',
+          additionalProperties: true,
+          example: {
+            frostIntensity: 'frost_intensity_value',
+            surfaceTint: 'surface_tint_value',
+            fontStyle: 'font_style_value',
+            wallpaper: 'color_or_image_url',
+            roundness: 'theme_roundness_value',
+            widgets: {
+              widget_id: {
+                wallpaper: 'widget_wallpaper_value',
+                fontStyle: 'widget_font_style_value',
+                roundness: 'widget_roundness_value',
+              },
+            },
           },
         },
         Widget: {
