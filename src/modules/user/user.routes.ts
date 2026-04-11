@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { UserController } from "./user.controller";
 import { protect } from "../../common/middleware/auth.middleware";
+import { validate } from "../../common/middleware/validate.middleware";
+import { contactFormSchema } from "./user.validation";
+import { contactLimiter } from "../../common/middleware/rate-limit.middleware";
 
 /**
  * @swagger
@@ -67,5 +70,40 @@ router.get("/me", protect, UserController.getMe);
  *         $ref: '#/components/responses/BadRequest'
  */
 router.patch("/me", protect, UserController.updateMe);
+
+/**
+ * @swagger
+ * /api/v1/users/contact:
+ *   post:
+ *     summary: Send a contact form message
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fullName
+ *               - email
+ *               - subject
+ *               - message
+ *             properties:
+ *               fullName: { type: string, example: "John Doe" }
+ *               email: { type: string, example: "john@example.com" }
+ *               subject: { type: string, example: "Inquiry" }
+ *               message: { type: string, example: "Hello, I have a question." }
+ *     responses:
+ *       200:
+ *         description: Message sent successfully
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ */
+router.post(
+  "/contact",
+  contactLimiter,
+  validate(contactFormSchema),
+  UserController.contact,
+);
 
 export default router;

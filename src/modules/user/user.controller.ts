@@ -1,4 +1,4 @@
-import { Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import { UserService } from "./user.service";
 import { AuthRequest } from "../../common/middleware/auth.middleware";
 import { sendResponse } from "../../common/utils/app-response";
@@ -29,6 +29,13 @@ export class UserController {
         "Profile updated successfully",
         result,
       );
+    },
+  );
+
+  static contact = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      await userService.contact(req.body);
+      return sendResponse(res, HttpStatus.OK, "Message sent successfully");
     },
   );
 }
