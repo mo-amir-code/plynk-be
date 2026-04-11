@@ -26,6 +26,7 @@ export const syncPageSchema = z.object({
     widgets: z
       .array(
         z.object({
+          id: z.string().uuid().optional(),
           type: z.string().optional(),
           handle: z.string().optional(),
           fullURL: z.string().optional(),
