@@ -21,8 +21,6 @@ import {
 
 const router = Router();
 
-router.use(authLimiter);
-
 /**
  * @swagger
  * /api/v1/auth/me:
@@ -61,7 +59,12 @@ router.get("/me", protect, AuthController.getMe);
  *       400:
  *         $ref: '#/components/responses/BadRequest'
  */
-router.post("/register", validate(registerSchema), AuthController.register);
+router.post(
+  "/register",
+  authLimiter,
+  validate(registerSchema),
+  AuthController.register,
+);
 
 /**
  * @swagger
@@ -87,7 +90,7 @@ router.post("/register", validate(registerSchema), AuthController.register);
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.post("/login", validate(loginSchema), AuthController.login);
+router.post("/login", authLimiter, validate(loginSchema), AuthController.login);
 
 /**
  * @swagger
