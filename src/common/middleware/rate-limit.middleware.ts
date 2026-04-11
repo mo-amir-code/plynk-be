@@ -52,3 +52,15 @@ export const syncLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+export const contactLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: {
+    success: false,
+    code: 429,
+    message: "Too many contact requests. Please try again later.",
+    result: null,
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});

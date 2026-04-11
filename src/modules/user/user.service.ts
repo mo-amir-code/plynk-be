@@ -1,6 +1,7 @@
 import prisma from "../../config/prisma";
 import { AppError } from "../../common/utils/app-error";
 import { HttpStatus } from "../../common/enums/http-status.enum";
+import { sendContactEmail, ContactEmailOptions } from "../../common/utils/mail";
 
 export class UserService {
   async getMe(userId: string) {
@@ -49,5 +50,9 @@ export class UserService {
         role: true,
       },
     });
+  }
+
+  async contact(data: ContactEmailOptions) {
+    return await sendContactEmail(data);
   }
 }
