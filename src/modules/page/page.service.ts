@@ -347,6 +347,7 @@ export class PageService {
     const { page } = user;
 
     return {
+      fullName: user.fullName,
       username: user.username,
       title: page.title,
       theme: {
