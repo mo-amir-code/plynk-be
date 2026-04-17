@@ -12,9 +12,14 @@
     "prisma:studio": "prisma studio",
     "start": "prisma migrate deploy && node dist/server.js",
     "lint": "eslint . --ext .ts",
-    "format": "prettier --write \"src/**/*.ts\""
+    "format": "prettier --write \"src/**/*.ts\"",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:db:up": "docker-compose -f docker-compose.test.yml up -d"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.19.0",
     "@prisma/adapter-pg": "^7.4.2",
     "@prisma/client": "7.4.2",
     "bcrypt": "^6.0.0",
@@ -26,6 +31,7 @@
     "google-auth-library": "^10.6.2",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
     "nodemailer": "^8.0.5",
     "pg": "^8.20.0",
     "pino": "^10.3.1",
@@ -41,21 +47,27 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.1.0",
     "@types/node": "^25.3.3",
     "@types/nodemailer": "^8.0.0",
     "@types/pg": "^8.18.0",
+    "@types/supertest": "^7.2.0",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "@vitest/coverage-v8": "^4.1.4",
+    "@vitest/ui": "^4.1.4",
     "esbuild": "^0.27.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "prettier": "^3.8.1",
     "prisma": "7.4.2",
+    "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.4"
   },
   "packageManager": "pnpm@10.13.1"
 }

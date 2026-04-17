@@ -68,14 +68,44 @@ Every API request follows a strict pipeline before execution:
 
 ---
 
+## Testing Suite 🛡️
+
+The project uses **Vitest** for high-performance functional logic testing. The suite is fully isolated from your production/development database using a dedicated Docker container.
+
+### 1. Prerequisites
+- **Docker Desktop**: Ensure Docker is running on your machine.
+
+### 2. Prepare Test Environment
+Start the isolated test database (running on Port 5433):
+```bash
+pnpm test:db:up
+```
+
+### 3. Run Tests
+Execute the full test suite:
+```bash
+pnpm test
+```
+Or use the interactive UI:
+```bash
+pnpm test:ui
+```
+
+### 4. Safety Guarantee
+The testing suite is programmatically locked to **Port 5433**. It forcefully ignores your root `.env` and `DIRECT_URL` configs using `PRISMA_NO_DOTENV` to ensure your production data (Supabase) is **never** touched during a test run.
+
+---
+
 ## Available Commands
 
 | Command | Action |
 | :--- | :--- |
 | `pnpm dev` | Start development server (Hot-reload) |
-| `pnpm build` | Compile TypeScript into `/dist` |
-| `pnpm start` | Run production build |
+| `pnpm test:db:up` | Launch isolated test database (Docker) |
+| `pnpm test` | Run full test suite |
+| `pnpm test:ui` | Open Vitest interactive UI |
 | `pnpm prisma:studio` | Open interactive Database GUI |
+| `pnpm build` | Compile TypeScript into `/dist` |
 | `pnpm format` | Auto-format codebase (Prettier) |
 | `pnpm lint` | Run static analysis (ESLint) |
 

@@ -1,84 +1,92 @@
 import { Router } from "express";
+import multer from "multer";
 import { AssetController } from "./asset.controller";
-import { protect } from "../../common/middleware/auth.middleware";
-import { validate } from "../../common/middleware/validate.middleware";
-import { createAssetSchema } from "./asset.validation";
+import { protect, restrictTo } from "../../common/middleware/auth.middleware";
+import { OwnerType } from "../../generated/client/client";
 
 /**
  * @swagger
  * tags:
  *   name: Assets
- *   description: Asset and file management
+ *   description: Asset management and GCS uploads
  */
 
 const router = Router();
 
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|svg|webp/;
+    const isAllowed = allowedTypes.test(file.mimetype);
+    if (isAllowed) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only images (jpeg, png, gif, svg, webp) are allowed") as any, false);
+    }
+  },
+});
+
 /**
  * @swagger
- * /api/v1/assets:
+ * /api/v1/assets/upload:
  *   post:
- *     summary: Create asset
+ *     summary: Upload a new asset (Admin or User)
  *     tags: [Assets]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/Asset'
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
- *         description: Asset created
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success: { type: boolean, example: true }
- *                 code: { type: integer, example: 201 }
- *                 result: { $ref: '#/components/schemas/Asset' }
- *       401:
- *         $ref: '#/components/responses/Unauthorized'
- *       400:
- *         $ref: '#/components/responses/BadRequest'
+ *         description: Asset uploaded
  */
-router.post(
-  "/",
-  protect,
-  validate(createAssetSchema),
-  AssetController.createAsset,
-);
+router.post("/upload", protect, upload.single("file"), AssetController.uploadAsset);
 
 /**
  * @swagger
- * /api/v1/assets:
+ * /api/v1/assets/my-assets:
  *   get:
- *     summary: Get my assets
+ *     summary: Get all assets of the current user
  *     tags: [Assets]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Asset list
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success: { type: boolean, example: true }
- *                 code: { type: integer, example: 200 }
- *                 result: { type: array, items: { $ref: '#/components/schemas/Asset' } }
- *       401:
- *         $ref: '#/components/responses/Unauthorized'
+ *         description: List of assets
  */
-router.get("/", protect, AssetController.getUserAssets);
+router.get("/user", protect, AssetController.getMyAssets);
+
+/**
+ * @swagger
+ * /api/v1/assets/default:
+ *   get:
+ *     summary: Get all default system assets (Admin uploaded)
+ *     tags: [Assets]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of system assets
+ */
+router.get("/default", protect, AssetController.getDefaultAssets);
 
 /**
  * @swagger
  * /api/v1/assets/{id}:
  *   delete:
- *     summary: Delete asset
+ *     summary: Delete asset (Owner or Admin)
  *     tags: [Assets]
  *     security:
  *       - bearerAuth: []
@@ -90,10 +98,22 @@ router.get("/", protect, AssetController.getUserAssets);
  *           type: string
  *     responses:
  *       200:
- *         $ref: '#/components/responses/Success'
- *       401:
- *         $ref: '#/components/responses/Unauthorized'
+ *         description: Asset deleted
  */
 router.delete("/:id", protect, AssetController.deleteAsset);
+
+/**
+ * @swagger
+ * /api/v1/assets/all:
+ *   get:
+ *     summary: Get all assets from all users (Admin only)
+ *     tags: [Assets]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of all assets
+ */
+router.get("/all", protect, restrictTo(OwnerType.ADMIN), AssetController.getAllAssets);
 
 export default router;

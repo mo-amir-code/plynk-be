@@ -4,13 +4,18 @@ import { AuthRequest } from "../../common/middleware/auth.middleware";
 import { sendResponse } from "../../common/utils/app-response";
 import { HttpStatus } from "../../common/enums/http-status.enum";
 import { asyncHandler } from "../../common/utils/async-handler";
+import { AppError } from "../../common/utils/app-error";
 
 const assetService = new AssetService();
 
 export class AssetController {
-  static createAsset = asyncHandler(
+  static uploadAsset = asyncHandler(
     async (req: AuthRequest, res: Response, next: NextFunction) => {
-      const result = await assetService.createAsset(req.user!.id, req.body);
+      if (!req.file) {
+        throw new AppError(HttpStatus.BAD_REQUEST, "No file provided");
+      }
+
+      const result = await assetService.uploadAsset(req.file, req.user!.id, req.user!.role);
       return sendResponse(
         res,
         HttpStatus.CREATED,
@@ -20,7 +25,23 @@ export class AssetController {
     },
   );
 
-  static getUserAssets = asyncHandler(
+  static deleteAsset = asyncHandler(
+    async (req: AuthRequest, res: Response, next: NextFunction) => {
+      await assetService.deleteAsset(
+        req.params.id as string,
+        req.user!.id,
+        req.user!.role,
+      );
+      return sendResponse(
+        res, 
+        HttpStatus.OK, 
+        "Asset deleted successfully", 
+        null
+      );
+    },
+  );
+
+  static getMyAssets = asyncHandler(
     async (req: AuthRequest, res: Response, next: NextFunction) => {
       const result = await assetService.getUserAssets(req.user!.id);
       return sendResponse(
@@ -32,14 +53,26 @@ export class AssetController {
     },
   );
 
-  static deleteAsset = asyncHandler(
+  static getAllAssets = asyncHandler(
     async (req: AuthRequest, res: Response, next: NextFunction) => {
-      await assetService.deleteAsset(req.user!.id, req.params.id as string);
+      const result = await assetService.getAllAssets();
       return sendResponse(
         res,
         HttpStatus.OK,
-        "Asset deleted successfully",
-        null,
+        "All assets fetched successfully",
+        result,
+      );
+    },
+  );
+
+  static getDefaultAssets = asyncHandler(
+    async (req: AuthRequest, res: Response, next: NextFunction) => {
+      const result = await assetService.getDefaultAssets();
+      return sendResponse(
+        res,
+        HttpStatus.OK,
+        "Default assets fetched successfully",
+        result,
       );
     },
   );
