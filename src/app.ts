@@ -26,6 +26,10 @@ dotenv.config();
 
 const app: Application = express();
 
+// if (process.env.NODE_ENV === "production") {
+//   app.set("trust proxy", 1);
+// }
+
 app.use(helmet());
 
 const corsOrigins = process.env.FRONTEND_URL

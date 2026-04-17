@@ -9,6 +9,7 @@ import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
 import { sendEmail } from "../../common/utils/email";
 import { resetPasswordTemplate } from "../../common/templates/emails/reset-password.template";
+import logger from "../../common/logger";
 
 export class AuthService {
   private googleClient = new OAuth2Client(
@@ -122,39 +123,47 @@ export class AuthService {
   }
 
   async handleGoogleCallback(code: string) {
-    const { tokens } = await this.googleClient.getToken(code);
-    const ticket = await this.googleClient.verifyIdToken({
-      idToken: tokens.id_token!,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-
-    const payload = ticket.getPayload();
-    if (!payload || !payload.email) {
-      throw new AppError(HttpStatus.UNAUTHORIZED, "Failed to get user from Google");
-    }
-
-    const { email, name } = payload;
-
-    let user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      const randomPassword = crypto.randomUUID();
-      const passwordHash = await bcrypt.hash(randomPassword, 12);
-
-      user = await prisma.user.create({
-        data: {
-          email,
-          fullName: name || "Google User",
-          passwordHash,
-          tnc: true, 
-        },
+    try {
+      const { tokens } = await this.googleClient.getToken(code);
+      const ticket = await this.googleClient.verifyIdToken({
+        idToken: tokens.id_token!,
+        audience: process.env.GOOGLE_CLIENT_ID,
       });
-    }
 
-    const token = this.generateToken(user.id, user.role as OwnerType, user.username);
-    return { user, token };
+      const payload = ticket.getPayload();
+      if (!payload || !payload.email) {
+        throw new AppError(HttpStatus.UNAUTHORIZED, "Failed to get user from Google");
+      }
+
+      const { email, name } = payload;
+
+      let user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!user) {
+        const randomPassword = crypto.randomUUID();
+        const passwordHash = await bcrypt.hash(randomPassword, 12);
+
+        user = await prisma.user.create({
+          data: {
+            email,
+            fullName: name || "Google User",
+            passwordHash,
+            tnc: true,
+          },
+        });
+      }
+
+      const token = this.generateToken(user.id, user.role as OwnerType, user.username);
+      return { user, token };
+    } catch (err: any) {
+      logger.error({ error: err.message }, "Google Auth Callback Failure");
+      throw new AppError(
+        err.statusCode || HttpStatus.UNAUTHORIZED,
+        err.message || "Google Authentication failed",
+      );
+    }
   }
 
   async forgotPassword(data: ForgotPasswordBody) {
@@ -177,11 +186,16 @@ export class AuthService {
 
     const resetUrl = `${process.env.FRONTEND_URL}/auth/reset-password?token=${resetToken}`;
 
-    await sendEmail({
-      to: user.email,
-      subject: "Reset your Plynk password",
-      html: resetPasswordTemplate(user.fullName || "there", resetUrl),
-    });
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "Reset your Plynk password",
+        html: resetPasswordTemplate(user.fullName || "there", resetUrl),
+      });
+    } catch (err: any) {
+      logger.error({ error: err.message, userId: user.id }, "Forgot Password Email Service Failure");
+      throw new AppError(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to send reset email");
+    }
   }
 
   async resetPassword(data: ResetPasswordBody) {
