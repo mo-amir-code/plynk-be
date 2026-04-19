@@ -8,8 +8,8 @@ export const createWidgetSchema = z.object({
     .object({
       pageId: z.string().uuid(),
       type: z.nativeEnum(WidgetType),
-      handle: z.string(),
-      fullURL: z.string().url(),
+      handle: z.string().optional(),
+      fullURL: z.string().optional(),
       startCol: z
         .number()
         .int()
@@ -18,15 +18,19 @@ export const createWidgetSchema = z.object({
       startRow: z.number().int().min(0),
       colSize: z.number().int().min(1).max(GRID_COLUMNS),
       rowSize: z.number().int().min(1),
-      icon: z.string().url().optional(),
+      icon: z.string().optional(),
       config: z.object({
         data: z.record(z.string(), z.any()),
         options: z.record(z.string(), z.any()).optional(),
-      }),
+      }).optional(),
     })
     .refine((data) => data.startCol + data.colSize <= GRID_COLUMNS, {
       message: `Widget width exceeds grid limit of ${GRID_COLUMNS} columns`,
       path: ["colSize"],
+    })
+    .refine((data) => data.fullURL || data.handle, {
+      message: "Either fullURL or handle is required",
+      path: ["fullURL"],
     }),
 });
 
