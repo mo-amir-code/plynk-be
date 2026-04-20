@@ -40,8 +40,11 @@ model User {
   tnc          Boolean   @default(false)
   resetToken        String?   @unique
   resetTokenExpires DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  isVerified          Boolean   @default(false)
+  verificationCode    String?
+  verificationExpires DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   page   Page?    // A user can have only one page.
   themes Theme[]  // themes created by user
@@ -101,9 +104,16 @@ model Widget {
   @@map("widgets")
 }
 
+enum AssetCategory {
+  IMAGE
+  STICKER
+}
+
 model Asset {
-  id         String    @id @default(uuid())
+  id         String        @id @default(uuid())
   url        String
+  category   AssetCategory @default(IMAGE)
+  metadata   Json?         @default("{}") // Store sizes, alt text, or sticker tags here
   ownerType  OwnerType
   uploadedBy String?   // optional if ownerType is admin
   user       User?     @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)

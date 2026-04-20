@@ -43,6 +43,19 @@ export const resetPasswordSchema = z.object({
   }),
 });
 
+export const verifyOTPSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+    code: z.string().length(6),
+  }),
+});
+
+export const resendOTPSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+  }),
+});
+
 export type LoginBody = z.infer<typeof loginSchema>["body"];
 export type RegisterBody = z.infer<typeof registerSchema>["body"];
 export type ForgotPasswordBody = z.infer<typeof forgotPasswordSchema>["body"];

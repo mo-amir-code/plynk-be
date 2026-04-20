@@ -10,6 +10,8 @@ import {
   claimUsernameSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  verifyOTPSchema,
+  resendOTPSchema,
 } from "./auth.validation";
 
 /**
@@ -147,6 +149,53 @@ router.post("/forgot-password", forgotPasswordLimiter, validate(forgotPasswordSc
  *         $ref: '#/components/responses/BadRequest'
  */
 router.post("/reset-password", resetPasswordLimiter, validate(resetPasswordSchema), AuthController.resetPassword);
+
+/**
+ * @swagger
+ * /api/v1/auth/verify-otp:
+ *   post:
+ *     summary: Verify email address with 6-digit OTP
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, code]
+ *             properties:
+ *               email: { type: string, format: email }
+ *               code: { type: string, minLength: 6, maxLength: 6 }
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/AuthSuccess'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ */
+router.post("/verify-otp", authLimiter, validate(verifyOTPSchema), AuthController.verifyOTP);
+
+/**
+ * @swagger
+ * /api/v1/auth/resend-otp:
+ *   post:
+ *     summary: Resend a fresh verification code
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email: { type: string, format: email }
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ */
+router.post("/resend-otp", authLimiter, validate(resendOTPSchema), AuthController.resendOTP);
 
 /**
  * @swagger

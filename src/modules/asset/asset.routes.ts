@@ -14,18 +14,35 @@ import { OwnerType } from "../../generated/client/client";
 const router = Router();
 
 const storage = multer.memoryStorage();
-const upload = multer({
+
+// Layer 1: Standard Image Validation (For Users & Admins)
+const imageUpload = multer({
   storage,
   limits: {
     fileSize: 1 * 1024 * 1024,
   },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|svg|webp/;
-    const isAllowed = allowedTypes.test(file.mimetype);
+    const isAllowed = allowedTypes.test(file.mimetype) || allowedTypes.test(file.originalname.toLowerCase());
     if (isAllowed) {
       cb(null, true);
     } else {
-      cb(new Error("Only images (jpeg, png, gif, svg, webp) are allowed") as any, false);
+      cb(new Error("Only standard image formats (jpg, png, webp, svg) are allowed") as any, false);
+    }
+  },
+});
+
+// Layer 2: Admin Sticker Validation (Includes JSON/Lottie & WebM)
+const stickerUpload = multer({
+  storage,
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB for animated stickers
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|svg|webp|json|webm/;
+    const isAllowed = allowedTypes.test(file.mimetype) || allowedTypes.test(file.originalname.toLowerCase());
+    if (isAllowed) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only images, stickers (JSON/Lottie), and WebM are allowed") as any, false);
     }
   },
 });
@@ -52,7 +69,8 @@ const upload = multer({
  *       201:
  *         description: Asset uploaded
  */
-router.post("/upload", protect, upload.single("file"), AssetController.uploadAsset);
+router.post("/upload", protect, imageUpload.single("file"), AssetController.uploadAsset);
+router.post("/upload/sticker", protect, restrictTo(OwnerType.ADMIN), stickerUpload.single("file"), AssetController.uploadSticker);
 
 /**
  * @swagger
