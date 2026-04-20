@@ -1,18 +1,30 @@
 import prisma from "../../config/prisma";
 import { uploadToGCS, deleteFromGCS } from "../../common/utils/gcs";
-import { OwnerType } from "../../generated/client/client";
+import { OwnerType, AssetCategory } from "../../generated/client/client";
 import { AppError } from "../../common/utils/app-error";
 import { HttpStatus } from "../../common/enums/http-status.enum";
 import logger from "../../common/logger";
 
 export class AssetService {
-  async uploadAsset(file: Express.Multer.File, userId: string, role: OwnerType) {
+  async uploadAsset(
+    file: Express.Multer.File, 
+    userId: string, 
+    role: OwnerType, 
+    category: AssetCategory = AssetCategory.IMAGE, 
+    metadata: any = {}
+  ) {
+    if (category === AssetCategory.STICKER && role !== OwnerType.ADMIN) {
+      throw new AppError(HttpStatus.FORBIDDEN, "Only admins can upload stickers");
+    }
+
     const folder = role === OwnerType.ADMIN ? "admins" : `users/${userId}`;
     const url = await uploadToGCS(file, folder);
 
     return prisma.asset.create({
       data: {
         url,
+        category,
+        metadata: metadata || {},
         ownerType: role,
         uploadedBy: role === OwnerType.ADMIN ? null : userId,
       },
@@ -36,15 +48,21 @@ export class AssetService {
     return prisma.asset.delete({ where: { id } });
   }
 
-  async getUserAssets(userId: string) {
+  async getUserAssets(userId: string, category?: AssetCategory) {
     return prisma.asset.findMany({
-      where: { uploadedBy: userId },
+      where: { 
+        uploadedBy: userId,
+        ...(category && { category })
+      },
       orderBy: { createdAt: "desc" },
     });
   }
 
-  async getAllAssets() {
+  async getAllAssets(category?: AssetCategory) {
     return prisma.asset.findMany({
+      where: {
+        ...(category && { category })
+      },
       orderBy: { createdAt: "desc" },
       include: {
         user: {
@@ -58,9 +76,12 @@ export class AssetService {
     });
   }
 
-  async getDefaultAssets() {
+  async getDefaultAssets(category?: AssetCategory) {
     return prisma.asset.findMany({
-      where: { ownerType: OwnerType.ADMIN },
+      where: { 
+        ownerType: OwnerType.ADMIN,
+        ...(category && { category })
+      },
       orderBy: { createdAt: "desc" },
     });
   }

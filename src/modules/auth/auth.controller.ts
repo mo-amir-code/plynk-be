@@ -78,6 +78,27 @@ export class AuthController {
     }
   );
 
+  static resendOTP = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { email } = req.body;
+      if (!email) throw new AppError(HttpStatus.BAD_REQUEST, "Email is required");
+      
+      await authService.resendVerificationCode(email);
+      return sendResponse(res, HttpStatus.OK, "Verification code sent successfully");
+    }
+  );
+
+  static verifyOTP = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { email, code } = req.body;
+      if (!email || !code) throw new AppError(HttpStatus.BAD_REQUEST, "Email and code are required");
+
+      const result = await authService.verifyOTP(email, code);
+      setAuthCookie(res, result.token);
+      return sendResponse(res, HttpStatus.OK, "Email verified successfully", result);
+    }
+  );
+
   static resetPassword = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       await authService.resetPassword(req.body);

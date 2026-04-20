@@ -9,6 +9,7 @@ import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
 import { sendEmail } from "../../common/utils/email";
 import { resetPasswordTemplate } from "../../common/templates/emails/reset-password.template";
+import { verifyEmailTemplate } from "../../common/templates/emails/verify-email.template";
 import logger from "../../common/logger";
 
 export class AuthService {
@@ -18,9 +19,9 @@ export class AuthService {
     process.env.GOOGLE_CALLBACK_URL,
   );
 
-  private generateToken(id: string, role: OwnerType, username?: string | null): string {
-    return jwt.sign({ id, role, username }, process.env.JWT_SECRET!, {
-      expiresIn: "7d",
+  private generateToken(id: string, role: OwnerType, isVerified: boolean, username?: string | null): string {
+    return jwt.sign({ id, role, isVerified, username }, process.env.JWT_SECRET!, {
+        expiresIn: "7d",
     });
   }
 
@@ -40,12 +41,20 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(data.password, 12);
 
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
+    const verificationExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 mins
+
     const user = await prisma.user.create({
       data: {
         email: data.email,
         passwordHash,
         fullName: data.fullName,
         tnc: data.tnc,
+        verificationCode,
+        verificationExpires,
+        isVerified: false,
       },
       select: {
         id: true,
@@ -53,10 +62,29 @@ export class AuthService {
         username: true,
         fullName: true,
         role: true,
+        isVerified: true,
       },
     });
 
-    const token = this.generateToken(user.id, user.role as OwnerType, user.username);
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "Your Plynk verification code",
+        html: verifyEmailTemplate(user.fullName || "there", verificationCode),
+      });
+    } catch (err: any) {
+      logger.error(
+        { error: err.message, userId: user.id },
+        "Verification Email Failure",
+      );
+    }
+
+    const token = this.generateToken(
+      user.id,
+      user.role as OwnerType,
+      user.isVerified,
+      user.username,
+    );
 
     return { user: { ...user }, token };
   }
@@ -70,7 +98,11 @@ export class AuthService {
       throw new AppError(HttpStatus.UNAUTHORIZED, "Invalid email or password");
     }
 
-    const token = this.generateToken(user.id, user.role as OwnerType, user.username);
+    // if (!user.isVerified) {
+    //   throw new AppError(HttpStatus.FORBIDDEN, "Account not verified");
+    // }
+
+    const token = this.generateToken(user.id, user.role as OwnerType, user.isVerified, user.username);
 
     return {
       user: {
@@ -79,6 +111,78 @@ export class AuthService {
         username: user.username,
         fullName: user.fullName,
         role: user.role,
+        isVerified: user.isVerified,
+      },
+      token,
+    };
+  }
+
+  async resendVerificationCode(email: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      throw new AppError(HttpStatus.NOT_FOUND, "User not found");
+    }
+
+    if (user.isVerified) {
+      throw new AppError(HttpStatus.BAD_REQUEST, "Account is already verified");
+    }
+
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationExpires = new Date(Date.now() + 30 * 60 * 1000);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { verificationCode, verificationExpires },
+    });
+
+    await sendEmail({
+      to: user.email,
+      subject: "Your Plynk verification code",
+      html: verifyEmailTemplate(user.fullName || "there", verificationCode),
+    });
+  }
+
+  async verifyOTP(email: string, code: string) {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new AppError(HttpStatus.NOT_FOUND, "User not found");
+    }
+
+    if (user.isVerified) {
+      throw new AppError(HttpStatus.BAD_REQUEST, "Account is already verified");
+    }
+
+    if (!user.verificationCode || user.verificationCode !== code) {
+      throw new AppError(HttpStatus.BAD_REQUEST, "Invalid verification code");
+    }
+
+    if (!user.verificationExpires || user.verificationExpires < new Date()) {
+      throw new AppError(HttpStatus.BAD_REQUEST, "Verification code has expired");
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        isVerified: true,
+        verificationCode: null,
+        verificationExpires: null,
+      },
+    });
+
+    const token = this.generateToken(updatedUser.id, updatedUser.role as OwnerType, true, updatedUser.username);
+
+    return {
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        username: updatedUser.username,
+        fullName: updatedUser.fullName,
+        role: updatedUser.role,
+        isVerified: true,
       },
       token,
     };
@@ -107,12 +211,13 @@ export class AuthService {
         id: true,
         email: true,
         username: true,
+        isVerified: true,
       },
     });
 
-    const token = this.generateToken(user.id, "USER" as OwnerType, user.username);
+    const token = this.generateToken(user.id, "USER" as OwnerType, user.isVerified, user.username);
 
-    return { user: { ...user, role: "USER" }, token };
+    return { user: { ...user, role: "USER", isVerified: user.isVerified }, token };
   }
 
   getGoogleAuthUrl() {
@@ -151,11 +256,12 @@ export class AuthService {
             fullName: name || "Google User",
             passwordHash,
             tnc: true,
+            isVerified: true,
           },
         });
       }
 
-      const token = this.generateToken(user.id, user.role as OwnerType, user.username);
+      const token = this.generateToken(user.id, user.role as OwnerType, user.isVerified, user.username);
       return { user, token };
     } catch (err: any) {
       logger.error({ error: err.message }, "Google Auth Callback Failure");
