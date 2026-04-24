@@ -14,6 +14,7 @@ export enum HttpStatus {
   CONFLICT = 409,
   UNPROCESSABLE_ENTITY = 422,
   TOO_MANY_REQUESTS = 429,
+  PAYLOAD_TOO_LARGE = 413,
 
   // 5xx Server Errors
   INTERNAL_SERVER_ERROR = 500,
@@ -36,6 +37,7 @@ export const HttpMessage: Record<HttpStatus, string> = {
   [HttpStatus.CONFLICT]: "Conflict occurred",
   [HttpStatus.UNPROCESSABLE_ENTITY]: "Validation error",
   [HttpStatus.TOO_MANY_REQUESTS]: "Too many requests",
+  [HttpStatus.PAYLOAD_TOO_LARGE]: "Payload too large",
 
   [HttpStatus.INTERNAL_SERVER_ERROR]: "Internal server error",
   [HttpStatus.NOT_IMPLEMENTED]: "Not implemented",

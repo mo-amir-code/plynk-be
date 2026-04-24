@@ -1,4 +1,5 @@
 import { Router } from "express";
+import multer from "multer";
 import { UserController } from "./user.controller";
 import { protect } from "../../common/middleware/auth.middleware";
 import { validate } from "../../common/middleware/validate.middleware";
@@ -13,6 +14,23 @@ import { contactLimiter } from "../../common/middleware/rate-limit.middleware";
  */
 
 const router = Router();
+
+const storage = multer.memoryStorage();
+const imageUpload = multer({
+  storage,
+  limits: {
+    fileSize: 2 * 1024 * 1024,
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|svg|webp/;
+    const isAllowed = allowedTypes.test(file.mimetype) || allowedTypes.test(file.originalname.toLowerCase());
+    if (isAllowed) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only standard image formats (jpg, png, webp, svg) are allowed") as any, false);
+    }
+  },
+});
 
 /**
  * @swagger
@@ -70,6 +88,44 @@ router.get("/me", protect, UserController.getMe);
  *         $ref: '#/components/responses/BadRequest'
  */
 router.patch("/me", protect, UserController.updateMe);
+
+/**
+ * @swagger
+ * /api/v1/users/me/avatar:
+ *   patch:
+ *     summary: Update current user avatar
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Avatar updated successfully
+ */
+router.patch("/me/avatar", protect, imageUpload.single("file"), UserController.updateAvatar);
+
+/**
+ * @swagger
+ * /api/v1/users/me/avatar:
+ *   delete:
+ *     summary: Remove current user avatar
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Avatar removed successfully
+ */
+router.delete("/me/avatar", protect, UserController.removeAvatar);
 
 /**
  * @swagger
