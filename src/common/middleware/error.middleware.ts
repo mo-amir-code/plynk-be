@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
+import multer from "multer";
 import { Prisma } from "../../generated/client/client";
 import { AppError } from "../utils/app-error";
 import { sendResponse } from "../utils/app-response";
@@ -31,6 +32,16 @@ export const globalErrorHandler = (
       message: e.message,
     }));
     return sendResponse(res, statusCode, message, errors);
+  }
+
+  if (err instanceof multer.MulterError) {
+    statusCode = HttpStatus.BAD_REQUEST;
+    if (err.code === "LIMIT_FILE_SIZE") {
+      statusCode = HttpStatus.PAYLOAD_TOO_LARGE;
+      message = "File is too large.";
+    } else {
+      message = `Upload Error: ${err.message}`;
+    }
   }
 
   if (err instanceof Prisma.PrismaClientKnownRequestError) {

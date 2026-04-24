@@ -4,6 +4,7 @@ import { AuthRequest } from "../../common/middleware/auth.middleware";
 import { sendResponse } from "../../common/utils/app-response";
 import { HttpStatus } from "../../common/enums/http-status.enum";
 import { asyncHandler } from "../../common/utils/async-handler";
+import { AppError } from "../../common/utils/app-error";
 
 const userService = new UserService();
 
@@ -27,6 +28,34 @@ export class UserController {
         res,
         HttpStatus.OK,
         "Profile updated successfully",
+        result,
+      );
+    },
+  );
+
+  static updateAvatar = asyncHandler(
+    async (req: AuthRequest, res: Response, next: NextFunction) => {
+      if (!req.file) {
+        throw new AppError(HttpStatus.BAD_REQUEST, "No avatar file provided");
+      }
+
+      const result = await userService.updateAvatar(req.user!.id, req.file);
+      return sendResponse(
+        res,
+        HttpStatus.OK,
+        "Avatar updated successfully",
+        result,
+      );
+    },
+  );
+
+  static removeAvatar = asyncHandler(
+    async (req: AuthRequest, res: Response, next: NextFunction) => {
+      const result = await userService.removeAvatar(req.user!.id);
+      return sendResponse(
+        res,
+        HttpStatus.OK,
+        "Avatar removed successfully",
         result,
       );
     },

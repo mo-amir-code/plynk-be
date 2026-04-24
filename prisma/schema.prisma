@@ -45,6 +45,7 @@ model User {
   verificationExpires DateTime?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
+  profileImage        String?
 
   page   Page?    // A user can have only one page.
   themes Theme[]  // themes created by user

@@ -349,6 +349,7 @@ export class PageService {
     return {
       fullName: user.fullName,
       username: user.username,
+      profileImage: user.profileImage,
       title: page.title,
       theme: {
         styleConfig: page.theme?.styleConfig || {},
